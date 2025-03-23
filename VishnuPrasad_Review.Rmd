@@ -1,0 +1,31 @@
+---
+title: "VishnuPrasad_Review"
+author: "Viraaj"
+date: "2025-03-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Hey Lucky!
+
+I tried running your script and it initially was stalling because I think the `fang` and `snp-positions` files were linked to you local directory, so I wasn't able to access it. But I was able to link it to the one on the class GitHub page.
+
+You may find it easier to initially clone the **fang & snp_position data** and assign them a name. This code in the beginning, saved me a lot of trouble later on :)
+
+```         
+fang <- read.table("https://raw.githubusercontent.com/EEOB-BioData/BCB546_Spring2025/refs/heads/main/assignments/UNIX_Assignment/fang_et_al_genotypes.txt", header=T, sep="\t")
+View(fang)
+
+snp <- read.table("https://raw.githubusercontent.com/EEOB-BioData/BCB546_Spring2025/refs/heads/main/assignments/UNIX_Assignment/snp_position.txt", header=TRUE, sep="\t")
+View(snp)
+```
+
+I was able to link it and run it but then it popped the following error in Line 216. But up until then it ran smoothly and all the data inspection worked very well. Sorry that I couldn't be of more help but great job so far!!
+
+```
+snp_info <- select(snp_data, SNP_ID, Chromosome, Position)  
+Error in`select()`: ! Can't select columns that don't exist. ✖ Column`SNP_ID`doesn't exist.
+```
