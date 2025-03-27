@@ -29,12 +29,18 @@ read_tsv() reads a tab-separated values (TSV) file into a data frame (or tibble)
 fang_data will store the contents of fang_et_al_genotypes.txt.
 ```{r, echo=TRUE}
 
-fang_data <- read_tsv("~/ISU/SPRING 2025/BCB4560/UNIX_Assignment/fang_et_al_genotypes.txt")
-snp_data <- read_tsv("~/ISU/SPRING 2025/BCB4560/UNIX_Assignment/snp_position.txt")
+#fang_data <- read_tsv("~/ISU/SPRING 2025/BCB4560/UNIX_Assignment/fang_et_al_genotypes.txt")
+#snp_data <- read_tsv("~/ISU/SPRING 2025/BCB4560/UNIX_Assignment/snp_position.txt")
 
 ```
+Alternative means of loading the data
 
+```{r, echo=TRUE}
 
+fang_data <- read_tsv("https://raw.githubusercontent.com/EEOB-BioData/BCB546_Spring2025/main/assignments/UNIX_Assignment/fang_et_al_genotypes.txt")
+snp_data <- read_tsv("https://raw.githubusercontent.com/EEOB-BioData/BCB546_Spring2025/main/assignments/UNIX_Assignment/snp_position.txt")
+
+```
 
 # Data Inspection for Genotype data (fang_et_al_genotypes)
 head (fang_data) will display the first few rows of each dataset.  
@@ -248,34 +254,19 @@ view(df_maize)
 write.table(df_joined, "Maize/maize_data.txt", sep = "\t", row.names = FALSE, quote = FALSE) 
 
 ```
-# Sort by ascending order of SNP position
-
-The code below uses arrange () to sort the df_maize dataset in ascending order based on the Position column.
-The result is saved as df_maize_sorted_incre.
-the sorted dataset (df_maize_sorted_incre) as a tab-separated.txt file called maize_sorted_incre_data.txt in the "Maize" directory
-
-```{r, echo=TRUE}
-# Sort by SNP position in ascending order  
-df_maize_sorted_incre <- df_maize %>% arrange(Position)  
-
-# Save the sorted maize dataset as a tab-separated text file  
-write.table(df_maize_sorted_incre, "Maize/maize_sorted_incre_data.txt", sep = "\t", row.names = FALSE, quote = FALSE)  
-
-
-```
 
 
 # Extract rows with 'multiple' or 'unknown' in Chromosome column for Maize
-The uses filter () to filter df_maize_sorted_incre to keep only rows where the Chromosome column has the value "multiple" and saves the result in df_multiple.  
-Similarly silters df_maize_sorted_incre to keep only rows where the Chromosome column has the value "unknown".
+The uses filter () to filter df_maize to keep only rows where the Chromosome column has the value "multiple" and saves the result in df_multiple.  
+Similarly filters df_maize to keep only rows where the Chromosome column has the value "unknown".
 The filtered df_multiple and df_unknown datasets as tab-separated .txt files, named maize_chromo_multiple.txt and maize_chromo_unknown.txt are respectively saved in the "Maize" directory
 
 ```{r, echo=TRUE}
 # Extract rows with 'multiple' in the Chromosome column  
-df_multiple <- df_maize_sorted_incre %>% filter(Chromosome == "multiple")  
+df_multiple <- df_maize %>% filter(Chromosome == "multiple")  
 
 # Extract rows with 'unknown' in the Chromosome column  
-df_unknown <- df_maize_sorted_incre %>% filter(Chromosome == "unknown")  
+df_unknown <- df_maize %>% filter(Chromosome == "unknown")  
 
 # Save the 'multiple' chromosome data to a tab-separated text file  
 write.table(df_multiple, "Maize/maize_chromo_multiple.txt",sep = "\t", row.names = FALSE, quote = FALSE)  
@@ -283,6 +274,39 @@ write.table(df_multiple, "Maize/maize_chromo_multiple.txt",sep = "\t", row.names
 # Save the 'unknown' chromosome data to a tab-separated text file  
 write.table (df_unknown, "Maize/maize_chromo_unknown.txt",sep = "\t", row.names = FALSE, quote = FALSE)  
 
+
+
+```
+
+# Sort by ascending order of SNP position
+The code below uses arrange () to sort the df_maize dataset in ascending order based on the Position column.
+Extracts and combines SNP data from chromosomes 1-10 in df_maize.
+Converts the Position column to a numeric type.
+The result is saved as df_maize_sorted_incre.
+the sorted dataset (df_maize_sorted_incre) as a tab-separated.txt file called maize_sorted_incre_data.txt in the "Maize" directory
+
+```{r, echo=TRUE}
+# Sort by SNP position in increasing order  
+# Sort by SNP position               
+df_maize_chr_filtered <- data.frame()  # Initialize an empty data frame to store sorted SNPs
+
+for (chr_num in 1:10) {  # Loop through chromosome numbers 1 to 10
+  df_chr <- df_maize %>%  # Filter the data for the current chromosome
+    filter(Chromosome == chr_num)  # Ensure column name matches the dataset structure
+  
+  df_maize_chr_filtered <- bind_rows(df_maize_chr_filtered, df_chr)  # Append filtered data for each chromosome
+}
+
+# Convert Position column to numeric type and sort in increasing order
+df_maize_sorted_incre <- df_maize_chr_filtered %>%
+  mutate(Position = suppressWarnings(as.numeric(Position))) %>%  # Convert Position to numeric type for accurate sorting
+  arrange(Position)  # Sort the data by Position in increasing order
+  
+# View the sorted dataset in RStudio  
+view(df_maize_sorted_incre)  
+
+# Save the sorted maize dataset as a tab-separated text file  
+write.table(df_maize_sorted_incre, "Maize/maize_sorted_incre_data.txt", sep = "\t", row.names = FALSE, quote = FALSE)  
 
 
 ```
@@ -310,29 +334,35 @@ for (chr_num in 1:10) {
 
 # Repalce "?/?" by "-/-" and Sort by decreasing order of SNP position
 This code performs the following steps:  
- df_maize_dash[df_maize_dash == "?/?"] <- "-/-". This step directly replaces the "?/?" placeholder with "-/-" in the dataset.  
-The modified dataset is saved as a tab-separated .txt file without row names and quotes.  
+ df_maize_chr_filtered_dash[df_maize_chr_filtered_dash == "?/?"] <- "-/-". This step directly replaces the "?/?" placeholder with "-/-" in the dataset.  
+The modified dataset is saved as a tab-separated .txt file without row names and quotes. 
+Extracts and combines SNP data from chromosomes 1-10 in df_maize_dash.
+Converts the Position column to a numeric type.  
 The arrange(desc(Position))is used to sort the dataset by the Position column in descending order.
-The   sorted dataset is then saved as a tab-separated .txt file.
+The result is saved as df_maize_sorted_decre
+The sorted dataset is then saved as a tab-separated .txt file.
 
 ```{r, echo=TRUE}
 
 # maize decreasing SNP Positions 
 # Create a copy of the maize dataset  
-df_maize_dash <- df_maize  
+df_maize_chr_filtered_dash <- df_maize_chr_filtered  
 
 # Replace all occurrences of "?/?" with "-/-" in the dataset  
-df_maize_dash[df_maize_dash == "?/?"] <- "-/-"  
+df_maize_chr_filtered_dash[df_maize_chr_filtered_dash == "?/?"] <- "-/-"  
 
 # View the modified dataset in RStudio  
-view(df_maize_dash)  
+view(df_maize_chr_filtered_dash)  
 
 # Save the modified dataset to a tab-separated text file  
-write.table(df_maize_dash, "Maize/data_maize_dash.txt", sep = "\t", row.names = FALSE, quote = FALSE)  
+write.table(df_maize_chr_filtered_dash, "Maize/maize_chr_filtered_dash.txt", sep = "\t", row.names = FALSE, quote = FALSE)  
 
 # Sort the modified dataset by Position in descending order  
-df_maize_sorted_decre_dash <- df_maize_dash %>% arrange(desc(Position))  
-
+#df_maize_sorted_decre_dash <- df_maize_dash %>% arrange(desc(Position))  
+# Convert Position column to numeric type and sort in decreasing order
+df_maize_sorted_decre_dash <- df_maize_chr_filtered_dash %>%
+  mutate(Position = suppressWarnings(as.numeric(Position))) %>%  # Convert Position to numeric type for accurate sorting
+  arrange(desc(Position))   # Sort the data by Position in decrasing order
 # View the sorted dataset in RStudio  
 view(df_maize_sorted_decre_dash)  
 
@@ -387,36 +417,16 @@ write.table(df_teosinte, paste0(file_dir, "data_teosinte.txt"), sep = "\t", row.
 
 ```
 
-# Sort by ascending order of SNP position (Teosinte)
-Sorts SNPs by Position in ascending order.  
-Saves the sorted data as "data_teosinte_sorted_incre.txt".  
-
-
-```{r, echo=TRUE}
-
-# Sort the Teosinte dataframe by SNP position in increasing order
-df_teosinte_sorted_incre <- df_teosinte %>% arrange(Position)
-
-# View the sorted dataframe in RStudio
-view(df_teosinte_sorted_incre)
-
-# Save the sorted Teosinte data to a text file with tab-separated values
-write.table(df_teosinte_sorted_incre, paste0(file_dir, "data_teosinte_sorted_incre.txt"), 
-            sep = "\t", row.names = FALSE, quote = FALSE)
-
-
-```
-  
 # Extract rows with 'multiple' or 'unknown' in Chromosome column (Teosinte)
-dentifies SNPs where Chromosome is labeled as "multiple" or "unknown".
+Identifies SNPs where Chromosome is labeled as "multiple" or "unknown".
 Saves them separately as:"Teosinte_chromo_multiple.txt" and "Teosinte_chromo_unknown.txt"
 
 ```{r, echo=TRUE}
 # Extract rows where the Chromosome column has the value "multiple"
-df_multiple <- df_teosinte_sorted_incre %>% filter(Chromosome == "multiple")
+df_multiple <- df_teosinte %>% filter(Chromosome == "multiple")
 
 # Extract rows where the Chromosome column has the value "unknown"
-df_unknown <- df_teosinte_sorted_incre %>% filter(Chromosome == "unknown")
+df_unknown <- df_teosinte %>% filter(Chromosome == "unknown")
 
 # Save the extracted data for "multiple" chromosomes to a text file with tab-separated values
 write.table(df_multiple, paste0(file_dir, "Teosinte_chromo_multiple.txt"), 
@@ -429,8 +439,40 @@ write.table(df_unknown, paste0(file_dir, "Teosinte_chromo_unknown.txt"),
 
 ```
 
+# Sort by ascending order of SNP position (Teosinte)
+Sorts SNPs by Position in ascending order.  
+Saves the sorted data as "data_teosinte_sorted_incre.txt".  
+
+
+```{r, echo=TRUE}
+
+# Sort by SNP position               
+df_teosinte_chr_filtered <- data.frame()  # Initialize an empty data frame to store sorted SNPs
+
+for (chr_num in 1:10) {  # Loop through chromosome numbers 1 to 10
+  df_chr <- df_teosinte %>%  # Filter the data for the current chromosome
+    filter(Chromosome == chr_num)  # Ensure column name matches the dataset structure
+  
+  df_teosinte_chr_filtered <- bind_rows(df_teosinte_chr_filtered, df_chr)  # Append filtered data for each chromosome
+}
+
+# Convert Position column to numeric type and sort in increasing order
+df_teosinte_sorted_incre <- df_teosinte_chr_filtered %>%
+  mutate(Position = suppressWarnings(as.numeric(Position))) %>%  # Convert Position to numeric type for accurate sorting
+  arrange(Position)  # Sort the data by Position in ascending order
+# View the sorted dataframe in RStudio
+view(df_teosinte_sorted_incre)
+
+# Save the sorted Teosinte data to a text file with tab-separated values
+write.table(df_teosinte_sorted_incre, paste0(file_dir, "data_teosinte_sorted_incre.txt"), 
+            sep = "\t", row.names = FALSE, quote = FALSE)
+
+
+```
+  
+
 # Increasing SNP Position (Teosinte)
-terates over chromosomes 1 to 10.  
+Iterates over chromosomes 1 to 10.  
 Filters SNPs for each chromosome.  
 Saves them in the "Teosinte_Increasing_Chromo" directory as:  
 "Teosinte_incre_chromo1.txt"  
@@ -463,21 +505,24 @@ Saves the cleaned dataset as "data_teosinte_sorted_decre_dash.txt".
 
 ```{r, echo=TRUE}
 # Create a copy of the Teosinte dataframe to modify the genotype format
-df_teosinte_dash <- df_teosinte
-
+df_teosinte_chr_filtered_dash <- df_teosinte_chr_filtered
 # Replace all occurrences of "?/?" with "-/-" in the dataframe
-df_teosinte_dash[df_teosinte_dash == "?/?"] <- "-/-"
+df_teosinte_chr_filtered_dash[df_teosinte_chr_filtered_dash == "?/?"] <- "-/-"
 
 # View the modified dataframe in RStudio
-view(df_teosinte_dash)
+view(df_teosinte_chr_filtered_dash)
 
 # Save the modified Teosinte data to a text file with tab-separated values
-write.table(df_teosinte_dash, paste0(file_dir, "data_teosinte_dash.txt"), 
+write.table(df_teosinte_chr_filtered_dash, paste0(file_dir, "teosinte_chr_filtered_dash.txt"), 
             sep = "\t", row.names = FALSE, quote = FALSE)
 
 # Sort the modified dataframe by SNP position in decreasing order
-df_teosinte_sorted_decre_dash <- df_teosinte_dash %>% arrange(desc(Position))
+df_teosinte_sorted_decre_dash <- df_teosinte_chr_filtered_dash %>% arrange(desc(Position))
 
+# Convert Position column to numeric type and sort in decreasing order
+df_teosinte_sorted_decre_dash <- df_teosinte_chr_filtered_dash %>%
+  mutate(Position = suppressWarnings(as.numeric(Position))) %>%  # Convert Position to numeric type for accurate sorting
+  arrange(Position)  # Sort the data by Position in ascending order
 # View the sorted dataframe in RStudio
 view(df_teosinte_sorted_decre_dash)
 
@@ -513,6 +558,63 @@ for (chr_num in 1:10) {
 
 #Part II Visualization 
 
+```{r, echo=TRUE}
+
+# Bar plot of SNP distribution by Chromosome in Maize
+ggplot(data = df_maize, aes(x = factor(Chromosome, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "multiple", "unknown")), 
+                            fill = factor(Chromosome))) + 
+  geom_bar() +  
+  ggtitle("Distribution of SNPs by Chromosome in Maize") +
+  
+  # Improve theme and text positioning
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  
+  # Improve axis labels
+  xlab("Chromosome") +
+  ylab("SNP Count") +
+  
+  # Improve legend
+  scale_fill_viridis_d(name = "Chromosome")  # Better color mapping
+
+
+
+```
+
+
+```{r, echo=TRUE}
+
+# Bar plot of SNP distribution by Chromosome in Teosinte
+ggplot(data = df_teosinte, aes(x = factor(Chromosome, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "multiple", "unknown")), 
+                               fill = factor(Chromosome))) + 
+  geom_bar() +  
+  ggtitle("Distribution of SNPs by Chromosome in Teosinte") +
+  
+  # Improve theme and text positioning
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  
+  # Improve axis labels
+  xlab("Chromosome") +
+  ylab("SNP Count") +
+  
+  # Improve legend
+  scale_fill_viridis_d(name = "Chromosome")  # Better color mapping
+
+
+```
+
+
+
+
+```{r, echo=TRUE}
+
+
+```
+
+
 The group_by(Chromosome) function organizes the dataset (df_maize) into groups based on unique values in the Chromosome column.  
 The summarise(SNP_Count = n()) function calculates the number of rows (SNPs) in each chromosome group and stores the count in a new column called SNP_Count.  
 The mutate(Group = "Maize") function adds a new column called Group to the resulting dataframe and assigns the value "Maize" to all rows. This helps in labeling the data when combining results from multiple datasets.  
@@ -529,7 +631,7 @@ snp_count_maize <- df_maize %>%
   summarise(SNP_Count = n()) %>%
   
   # Add a new column to indicate the dataset source as "Maize"
-  mutate(Group = "Maize")
+  mutate(Species = "Maize")
 
 
 
@@ -550,7 +652,7 @@ snp_count_teosinte <- df_teosinte %>%
   summarise(SNP_Count = n()) %>%
   
   # Add a new column to indicate the dataset source as "Teosinte"
-  mutate(Group = "Teosinte")
+  mutate(Species = "Teosinte")
 
 
 ```
@@ -559,6 +661,8 @@ snp_count_teosinte <- df_teosinte %>%
 
 The bind_rows(snp_count_maize, snp_count_teosinte) function merges the snp_count_maize and snp_count_teosinte dataframes by stacking them on top of each other.  
 This works because both dataframes have the same column structure (Chromosome, SNP_Count, and Group).  
+
+
 
 ```{r, echo=TRUE}
 
@@ -573,7 +677,7 @@ This code generates a bar plot to visualize the SNP distribution across chromoso
 
 ```{r, echo=TRUE}
 # Plot SNP count per chromosome for Maize and Teosinte
-ggplot(snp_counts, aes(x = Chromosome, y = SNP_Count, fill = Group)) +
+ggplot(snp_counts, aes(x = Chromosome, y = SNP_Count, fill = Species)) +
   
   # Create a bar plot with "Chromosome" on the x-axis and "SNP_Count" on the y-axis
   # The bars are grouped by "Group" (Maize vs. Teosinte)
@@ -585,13 +689,111 @@ ggplot(snp_counts, aes(x = Chromosome, y = SNP_Count, fill = Group)) +
   
   # Set custom colors for the "Maize" and "Teosinte" groups
   scale_fill_manual(values = c("Maize" = "blue", "Teosinte" = "green")) +
-  
+
+  # Ensure chromosome labels appear in the correct order
+  scale_x_discrete(limits = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "multiple", "unknown"))+
   # Use a clean and simple theme for the plot
   theme_classic()
 
 
 
 ```
+```{r, echo=TRUE}
+
+# Scatter plot of SNP count per chromosome for Maize and Teosinte
+ggplot(snp_counts, aes(x = Chromosome, y = SNP_Count, color = Species)) +
+  
+  # Create a scatter plot with "Chromosome" on the x-axis and "SNP_Count" on the y-axis
+  geom_point(size = 3, position = position_jitter(width = 0.2, height = 0)) +  # Add slight jitter for better visibility
+
+  # Add labels to the plot
+  labs(title = "SNP Distribution Across Chromosomes",
+       x = "Chromosome", y = "Number of SNPs") +
+  
+  # Set custom colors for the "Maize" and "Teosinte" groups
+  scale_color_manual(values = c("Maize" = "blue", "Teosinte" = "green")) +
+
+  # Ensure chromosome labels appear in the correct order
+  scale_x_discrete(limits = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "multiple", "unknown")) +
+  
+  # Use a clean and simple theme for the plot
+  theme_classic()
+
+
+
+
+```
+
+
+```{r,fig.width = 10,fig.height=14, echo=TRUE}
+
+# Scatter plot of SNP distribution by Chromosome in Maize
+ggplot(data = df_maize, aes(x = factor(Chromosome, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "multiple", "unknown")), 
+                            y = Position, 
+                            color = factor(Chromosome, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "multiple", "unknown")))) + 
+  geom_point(alpha = 0.7, size = 1.5) +  # Adjust transparency and size
+  
+  ggtitle("Distribution of SNPs by Chromosome in Maize") +
+  
+  # Improve axis labels
+  xlab("Chromosome") +
+  ylab("Genomic Position") +
+  
+  # Improve theme and text positioning
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.title = element_text(size = 12, face = "bold"),
+        legend.text = element_text(size = 10)) +
+
+  # Explicitly define color mapping and ensure correct legend order
+  scale_color_manual(name = "Chromosome",
+                     values = c("1" = "#F8766D", "2" = "#B79F00", "3" = "#7CAE00", "4" = "#00BE67",
+                                "5" = "#00BFC4", "6" = "#00A9FF", "7" = "#619CFF", "8" = "#C77CFF",
+                                "9" = "#D89000", "10" = "#E76BF3", "multiple" = "#FF61CC", "unknown" = "#F564E3"),
+                     breaks = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "multiple", "unknown")) +
+  
+  guides(color = guide_legend(ncol = 1))  # Ensure legend is in one column
+
+
+```
+
+
+```{r, echo=TRUE}
+
+# Scatter plot of the distribution of SNPs by Chromosome in Teosinte
+ggplot(data = df_teosinte, aes(x = factor(Chromosome, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "multiple", "unknown")), 
+                               y = Position, color = factor(Chromosome, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "multiple", "unknown")))) + 
+  geom_point(alpha = 0.7, size = 1.5) +  # Adjust point transparency and size for better visibility
+  ggtitle("Distribution of SNPs by Chromosome in Teosinte") +
+  
+  # Improve axis labels
+  xlab("Chromosome") +
+  ylab("Genomic Position") +
+  
+  # Improve theme and text positioning
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.title = element_text(size = 12, face = "bold"),
+        legend.text = element_text(size = 10)) +
+
+  # Explicitly define color mapping and ensure correct legend order
+  scale_color_manual(name = "Chromosome",
+                     values = c("1" = "#F8766D", "2" = "#B79F00", "3" = "#7CAE00", "4" = "#00BE67",
+                                "5" = "#00BFC4", "6" = "#00A9FF", "7" = "#619CFF", "8" = "#C77CFF",
+                                "9" = "#D89000", "10" = "#E76BF3", "multiple" = "#FF61CC", "unknown" = "#F564E3"),
+                     breaks = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "multiple", "unknown")) +
+  
+  guides(color = guide_legend(ncol = 1))  # Ensure legend is in one column
+
+
+
+```
+
+
+
+
 
 # For optimized mapping
 This code reshapes the genotype data from both Maize and Teosinte, classifies each SNP as "Homozygous", "Heterozygous", or "Missing", and then combines both datasets into a single dataframe (df_combined) that includes both Maize and Teosinte genotypes.
@@ -605,52 +807,219 @@ bind_rows: Combines the df_maize_long and df_teosinte_long datasets into one dat
 df_combined: This combined dataframe contains data for both Maize and Teosinte, with columns: SNP_ID, Chromosome, Position, Sample, Genotype, SNP_Type, and Group.  
 
 
-```{r, echo=TRUE}
+
+
+```{r, echo = TRUE}
+
 # Function to classify SNPs
 classify_snp <- function(genotype) {
   switch(genotype,
           "?/?" = "Missing",
          ifelse(grepl("A/A|C/C|G/G|T/T", genotype), "Homozygous", "Heterozygous"))
 }
-
-# Apply classification to maize data
-df_maize_long <- df_maize %>%
-  pivot_longer(cols = -c(SNP_ID, Chromosome, Position),  # Select all except metadata columns
-               names_to = "Sample", values_to = "Genotype") %>%
-  mutate(SNP_Type = map_chr(Genotype, classify_snp))
-# Faster than sapply
+df_maize_long <- df_maize  %>%
+  pivot_longer(cols = -c(SNP_ID, Chromosome, Position),  # Exclude metadata columns
+               names_to = "Group", values_to = "Genotype") %>%
+  
+  # Standardize Group names (remove .1, .2 suffixes)
+  mutate(Group = str_remove(Group, "\\.\\d+$")) %>%
+  
+  filter(str_starts(Group, "ZMMIL") | str_starts(Group, "ZMMLR") | str_starts(Group, "ZMMMR")) %>%  
+  mutate(Species = "Maize", SNP_Type = map_chr(Genotype, classify_snp))    # Assign species and classify SNPs
 head(df_maize_long)
-# Apply classification to teosinte data
-df_teosinte_long <- df_teosinte %>%
-  pivot_longer(cols = -c(SNP_ID, Chromosome, Position),  # Select all except metadata columns
-               names_to = "Sample", values_to = "Genotype") %>%
-  mutate(SNP_Type = map_chr(Genotype, classify_snp))
 
+# Convert teosinte data to long format
+df_teosinte_long <- df_teosinte %>%
+  pivot_longer(cols = -c(SNP_ID, Chromosome, Position),  # Exclude metadata columns
+               names_to = "Group", values_to = "Genotype") %>%
+
+  # Standardize Group names (remove .1, .2 suffixes)
+  mutate(Group = str_remove(Group, "\\.\\d+$")) %>%
+  
+  filter(str_starts(Group, "ZMPBA") | str_starts(Group, "ZMPIL") | str_starts(Group, "ZMPJA")) %>%
+  mutate(Species = "Teosinte", SNP_Type = map_chr(Genotype, classify_snp))    # Assign species and classify SNPs
 head(df_teosinte_long)
-# Combine both datasets
-df_combined <- bind_rows(
-  df_maize_long %>% mutate(Group = "Maize"),
-  df_teosinte_long %>% mutate(Group = "Teosinte")
+
+# Combine both datasets into one
+df_combined <- bind_rows(df_maize_long, df_teosinte_long)
+head(df_combined)
+# Merge with filtered SNP metadata
+#df_snp_filtered <- merge(df_combined, by = "SNP_ID")
+
+# Summarize SNP types by species (Maize or Teosinte)
+df_snp_summary <- df_combined %>%
+  group_by(Species, SNP_Type, Group) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  mutate(Proportion = Count / sum(Count))  # Calculate proportion of SNPs
+
+# Print SNP summary table
+print(df_snp_summary)
+
+
+
+################
+
+
+
+```
+
+
+
+
+
+```{r,fig.width=12, fig.height= 14, echo=TRUE}
+# Plot SNP distribution by chromosome for maize vs teosinte
+by_species_plot <- ggplot(data = df_combined) +
+  geom_bar(mapping = aes(x = Chromosome, fill = Species)) +
+  xlab("Chromosome") + 
+  ylab("SNPs") +
+  ggtitle("Single Nucleotide Polymorphism per Sample") +
+  
+  theme_classic()
+
+# Display the plot
+print(by_species_plot)
+
+```
+
+
+
+
+
+```{r, echo=TRUE}
+### Distribution of Homozygous Genotypes by Group in Maize
+# Select only homozygous genotypes
+maize_homozygous_snp <- df_maize_long %>%
+  filter(SNP_Type == "Homozygous")
+
+# Convert "Group" into a factor with the correct order
+maize_homozygous_snp$Group <- factor(
+  maize_homozygous_snp$Group,
+  levels = c("ZMMIL", "ZMMLR", "ZMMMR")
 )
 
-# Combine the long format data for both maize and teosinte
-df_long <- bind_rows(df_maize_long, df_teosinte_long)
+# Exclude NA groups from the plot
+maize_homozygous_snp <- maize_homozygous_snp %>%
+  filter(!is.na(Group))
 
-# Summarize SNP types by group (Maize or Teosinte)
-df_snp_summary <- df_combined %>%
-  
-  # Group the data by "Group" (Maize or Teosinte) and "SNP_Type" (Homozygous, Heterozygous, Missing)
-  group_by(Group, SNP_Type) %>%
-  
-  # Count the number of occurrences for each SNP type in each group
-  summarise(Count = n(), .groups = "drop") %>%
-  
-  # Calculate the proportion of each SNP type within each group
-  mutate(Proportion = Count / sum(Count))
+# Plot: Homozygous Genotype Distribution by Group
+maize_homozygous_plot <- ggplot(maize_homozygous_snp, aes(x = Group, fill = Genotype)) +
+  geom_bar(position = "dodge", width = 0.7) +
+  scale_fill_manual(
+    values = c("A/A" = "#1b9e77", "T/T" = "#d95f02", "C/C" = "#7570b3", "G/G" = "#e7298a"),
+    name = "Genotype"
+  ) +
+  xlab("Group") +
+  ylab("Homozygous SNP Count") +
+  ggtitle("Distribution of Homozygous Genotypes by Group in Maize") +
+  theme_classic()
+maize_homozygous_plot
 
-# View the summarized results (SNP counts and proportions)
-print(df_snp_summary)
 ```
+
+```{r, echo=TRUE}
+### Distribution of Homozygous Genotypes by Group in Teosinte
+# Select only homozygous genotypes
+teosinte_homozygous_snp <- df_teosinte_long  %>%
+  filter(SNP_Type == "Homozygous")
+
+# Convert "Group" into a factor with the correct order
+teosinte_homozygous_snp$Group <- factor(
+  teosinte_homozygous_snp$Group,
+  levels = c("ZMPBA", "ZMPIL", "ZMPJA")
+)
+
+# Exclude NA groups from the plot
+teosinte_homozygous_snp <- teosinte_homozygous_snp %>%
+  filter(!is.na(Group))
+
+# Plot: Homozygous Genotype Distribution by Group
+teosinte_homozygous_plot <- ggplot(teosinte_homozygous_snp, aes(x = Group, fill = Genotype)) +
+  geom_bar(position = "dodge", width = 0.7) +
+  scale_fill_manual(
+    values = c("A/A" = "#1b9e77", "T/T" = "#d95f02", "C/C" = "#7570b3", "G/G" = "#e7298a"),
+    name = "Genotype"
+  ) +
+  xlab("Group") +
+  ylab("Homozygous SNP Count") +
+  ggtitle("Distribution of Homozygous Genotypes by Group in Teosinte") +
+  theme_classic()
+teosinte_homozygous_plot
+
+```
+
+
+
+```{r, echo=TRUE}
+# Select only heterozygous genotypes in maize groups
+maize_heterozygous_snp <- df_maize_long %>%
+  filter(SNP_Type == "Heterozygous")
+
+# Convert "Group" into a factor with the correct order
+maize_heterozygous_snp$Group <- factor(
+  maize_heterozygous_snp$Group,
+  levels = c("ZMMIL", "ZMMLR", "ZMMMR")
+)
+
+# Exclude NA groups from the plot
+maize_heterozygous_snp <- maize_heterozygous_snp %>%
+  filter(!is.na(Group))
+
+# Plot: Heterozygous Genotype Distribution by Group
+maize_heterozygous_plot <- ggplot(maize_heterozygous_snp, aes(x = Group, fill = Genotype)) +
+  geom_bar(position = "dodge", width = 0.7) +
+  scale_fill_manual(
+    values = c("C/G" = "#1b9e77", "G/T" = "#d95f02", "A/G" = "#7570b3",
+               "C/T" = "#e7298a", "A/T" = "#66a61e", "A/C" = "#e6ab02"),
+    name = "Genotype"
+  ) +
+  xlab("Group") +
+  ylab("Heterozygous SNP Count") +
+  ggtitle("Distribution of Heterozygous Genotypes by Group in Maize") +
+  theme_classic()
+
+maize_heterozygous_plot
+
+
+
+```
+
+
+```{r, echo=TRUE}
+# Select only heterozygous genotypes
+teosinte_heterozygous_snp <- df_combined %>%
+  filter(SNP_Type == "Heterozygous")
+
+# Convert "Group" into a factor with the correct order
+teosinte_heterozygous_snp$Group <- factor(
+  teosinte_heterozygous_snp$Group,
+  levels = c("ZMPBA", "ZMPIL", "ZMPJA")
+)
+
+# Exclude NA groups from the plot
+teosinte_heterozygous_snp <- teosinte_heterozygous_snp %>%
+  filter(!is.na(Group))
+
+# Plot: Heterozygous Genotype Distribution by Group
+teosinte_heterozygous_plot <- ggplot(teosinte_heterozygous_snp, aes(x = Group, fill = Genotype)) +
+  geom_bar(position = "dodge", width = 0.7) +
+  scale_fill_manual(
+    values = c("C/G" = "#1b9e77", "G/T" = "#d95f02", "A/G" = "#7570b3",
+               "C/T" = "#e7298a", "A/T" = "#66a61e", "A/C" = "#e6ab02"),
+    name = "Genotype"
+  ) +
+  xlab("Group") +
+  ylab("Heterozygous SNP Count") +
+  ggtitle("Distribution of Heterozygous Genotypes by Group in Teosinte") +
+  theme_classic()
+
+teosinte_heterozygous_plot
+
+
+
+```
+
+#############
 
 # Count proportions of SNP types per group
 df_long <- bind_rows(maize_long, teosinte_long): Combines the long-format maize and teosinte datasets into a single dataframe (df_long).
@@ -668,7 +1037,7 @@ print(df_snp_summary): Displays the summarized results, showing the count and pr
 df_snp_summary <- df_combined %>%
   
   # Group the data by "Group" (Maize or Teosinte) and "SNP_Type" (Homozygous, Heterozygous, Missing)
-  group_by(Group, SNP_Type) %>%
+  group_by(Species, SNP_Type) %>%
   
   # Count the number of occurrences for each SNP type in each group
   summarise(Count = n(), .groups = "drop") %>%
@@ -688,7 +1057,7 @@ ggplot(df_combined, aes(x = Chromosome, fill = SNP_Type)): Initializes the plot 
 
 geom_bar(position = "fill"): Creates a bar chart where the height of each bar represents the proportion of each SNP type, not the count, scaling the bars to show percentages.  
 
-facet_wrap(~ Group): Creates separate subplots for each group (Maize and Teosinte), showing the SNP distribution across chromosomes for each group.  
+facet_wrap(~ Species): Creates separate subplots for each group (Maize and Teosinte), showing the SNP distribution across chromosomes for each group.  
 
 labs(...): Adds titles and axis labels: Title: "Zygosity Distribution Across Chromosomes", X-axis: "Chromosome"
 Y-axis: "Proportion", Legend: "SNP Type"
@@ -700,7 +1069,7 @@ This creates a clear, proportion-based bar chart of SNP distribution across chro
 ```{r,fig.width=14, fig.height=8, echo=TRUE}
 ggplot(df_combined, aes(x = Chromosome, fill = SNP_Type)) +
   geom_bar(position = "fill") +  # "fill" makes proportions instead of counts
-  facet_wrap(~ Group) +  # Separate plots for Maize & Teosinte
+  facet_wrap(~ Species) +  # Separate plots for Maize & Teosinte
   labs(title = "Zygosity Distribution Across Chromosomes",
        x = "Chromosome", y = "Proportion",
        fill = "SNP Type") +
@@ -717,7 +1086,7 @@ Y-axis labels are formatted as percentages.
 
 ```{r, echo=TRUE}
 #Bar Plot – SNP Distribution by Group
-ggplot(df_snp_summary, aes(x = Group, y = Proportion, fill = SNP_Type)) +
+ggplot(df_snp_summary, aes(x = Species, y = Proportion, fill = SNP_Type)) +
   geom_bar(stat = "identity", position = "fill") +  # Stacked proportional bar chart
   labs(title = "SNP Type Proportions in Maize vs Teosinte",
        x = "Group", y = "Proportion") +
@@ -735,7 +1104,7 @@ Uses a stacked bar chart where the total height represents the sum of SNP counts
 
 ```{r, echo=TRUE}
 #Stacked Bar Plot – Absolute SNP Counts
-ggplot(df_snp_summary, aes(x = Group, y = Count, fill = SNP_Type)) +
+ggplot(df_snp_summary, aes(x = Species, y = Count, fill = SNP_Type)) +
   geom_bar(stat = "identity", position = "stack") +  # Stacked bar chart
   labs(title = "Total SNP Counts in Maize vs Teosinte",
        x = "Group", y = "SNP Count") +
@@ -755,8 +1124,8 @@ Labels include the title: "SNP Type Distribution in Maize vs Teosinte", X-axis: 
 The plot uses a clean theme (theme_classic()).  
 ```{r, echo=TRUE}
 
-# Bar Plot – SNP Distribution per Sample
-ggplot(df_combined, aes(x = SNP_Type, y = ..count.., fill = Group)) +
+# Bar Plot – SNP Distribution per Species
+ggplot(df_combined, aes(x = SNP_Type, y = ..count.., fill = Species)) +
   geom_bar(position = "dodge") +  
   labs(title = "SNP Type Distribution in Maize vs Teosinte",
        x = "SNP Type", y = "Count") +
@@ -767,17 +1136,52 @@ ggplot(df_combined, aes(x = SNP_Type, y = ..count.., fill = Group)) +
 ```
 
 
+
 ```{r, echo=TRUE}
-
-
-
-
+# Bar Plot – SNP Distribution per Group in Maize
+ggplot(df_maize_long, aes(x = SNP_Type, y = ..count.., fill = Group)) +
+  geom_bar(position = "dodge") +  
+  labs(title = "SNP Type Distributionper Group in Maize",
+       x = "SNP Type", y = "Count") +
+  theme_classic()
 
 ```
 
 
 ```{r, echo=TRUE}
+# Bar Plot – SNP Distribution per Group in Teosinte
+ggplot(df_teosinte_long, aes(x = SNP_Type, y = ..count.., fill = Group)) +
+  geom_bar(position = "dodge") +  
+  labs(title = "SNP Type Distribution per Group in Teosinte",
+       x = "SNP Type", y = "Count") +
+  theme_classic()
 
+```
+
+
+
+
+
+```{r, echo=TRUE}
+
+# Heatmap of SNP distribution across chromosomes for Maize and Teosinte
+ggplot(snp_counts, aes(x = Chromosome, y = Species, fill = SNP_Count)) +
+  
+  # Create a heatmap using geom_tile()
+  geom_tile(color = "white ") +
+  
+  # Add labels to the plot
+  labs(title = "SNP Distribution Heatmap Across Chromosomes",
+       x = "Chromosome", y = "Species", fill = "SNP Count") +
+
+  # Use a gradient color scale to represent SNP counts
+  scale_fill_gradient(low = "yellow", high = "blue") +
+  
+  # Ensure chromosome labels appear in the correct order
+  scale_x_discrete(limits = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "multiple", "unknown")) +
+  
+  # Use a clean and simple theme
+  theme_classic()
 
 
 
